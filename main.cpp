@@ -33,6 +33,23 @@ void SaveText(char *data)
 	fclose(fp);
 }
 
+// 数字のゼロ埋め（2桁）
+char* ZeroFilling10(int number)
+{
+	char buried[3];
+
+	if (number < 10)
+	{
+		sprintf_s(buried, "0%d", number);
+	}
+	else
+	{
+		sprintf_s(buried, "%d", number);
+	}
+
+	return buried;
+}
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	ChangeWindowMode(TRUE);	// ウィンドウモードに変更
@@ -76,11 +93,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		if (keyState[KEY_INPUT_SPACE] == 1 && oldKeyState[KEY_INPUT_SPACE] == 0)
 		{
 			waterCount++;
-			sprintf_s(msg, "%d/%d/%d %d:%d:%d 水を飲んだ！ %d杯目\n", Date.Year, Date.Mon, Date.Day, Date.Hour, Date.Min, Date.Sec, waterCount);
+
+			sprintf_s(msg, "%d/%c%c/%c%c %c%c:%c%c:%c%c 水を飲んだ！ %d杯目\n",
+				Date.Year,
+				ZeroFilling10(Date.Mon)[0], ZeroFilling10(Date.Mon)[1],
+				ZeroFilling10(Date.Day)[0], ZeroFilling10(Date.Day)[1],
+				ZeroFilling10(Date.Hour)[0], ZeroFilling10(Date.Hour)[1],
+				ZeroFilling10(Date.Min)[0], ZeroFilling10(Date.Min)[1],
+				ZeroFilling10(Date.Sec)[0], ZeroFilling10(Date.Sec)[1],
+				waterCount);
 			SaveText(msg);
 		}
 
 		printfDx("WaterCount:%d\n", waterCount);
+		printfDx("WaterCount:%s\n", ZeroFilling10(Date.Mon));
 
 
 		// ------------------------------------

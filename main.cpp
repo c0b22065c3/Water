@@ -6,6 +6,8 @@
 #define SCREEN_WIDTH	640
 #define SCREEN_HEIGHT	480
 
+#define GLAPH_NUM 5
+
 // 時間
 int startTime;					// ゲーム開始時間
 int nowTime;					// 現在の時間
@@ -22,6 +24,12 @@ int waterCount = 0;
 int integer = 0;
 float floating = 0.0f;
 char msg[64] = "";
+
+// 乱数
+int GetRandom(int min, int max)
+{
+	return min + (int)(rand() * (max - min + 1.0) / (1.0 + RAND_MAX));
+}
 
 // テキストファイルに書き込み
 void SaveText(char *data)
@@ -56,7 +64,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	SetGraphMode(SCREEN_WIDTH, SCREEN_HEIGHT, 32);	// 解像度の設定
 	SetMainWindowText("Water");	// ウィンドウのタイトルを変更
 
-	// 現在時刻を格納するよう変数
+	// 現在時刻を格納する用の変数
 	DATEDATA Date;
 
 	if (DxLib_Init() == -1)	// DXライブラリ初期化処理
@@ -64,11 +72,25 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return -1;	// エラーが起きたら直ちに終了
 	}
 
+	// 背景の画像ハンドラ
+	int GHandle[GLAPH_NUM] = {
+		LoadGraph("Image/Mahiron.jpg"),
+		LoadGraph("Image/Nayutan.jpg"),
+		LoadGraph("Image/Momiji.jpg"),
+		LoadGraph("Image/Asahi.jpg"),
+		LoadGraph("Image/Miyo.jpg")
+	};
+
+	int nowGlaph = 0; // 表示中の背景画像
+
 	// ひとつ前のキーボード情報を初期化
 	for (int key = 0; key < 256; key++)
 	{
 		oldKeyState[key] = 0;
 	}
+	
+	// 毎回違う乱数を生成
+	srand((unsigned int)time(NULL));
 
 	// ゲーム開始時間を得る
 	startTime = GetNowCount();
@@ -105,8 +127,33 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			SaveText(msg);
 		}
 
+		// 右キーで次の画像へ
+		if (keyState[KEY_INPUT_RIGHT] == 1 && oldKeyState[KEY_INPUT_RIGHT] == 0)
+		{
+			if (nowGlaph < GLAPH_NUM - 1)
+			{
+				nowGlaph++;
+			}
+			else
+			{
+				nowGlaph = 0;
+			}
+		}
+
+		// 左キーで前の画像へ
+		if (keyState[KEY_INPUT_LEFT] == 1 && oldKeyState[KEY_INPUT_LEFT] == 0)
+		{
+			if (nowGlaph > 0)
+			{
+				nowGlaph--;
+			}
+			else
+			{
+				nowGlaph = GLAPH_NUM - 1;
+			}
+		}
+
 		printfDx("WaterCount:%d\n", waterCount);
-		printfDx("WaterCount:%s\n", ZeroFilling10(Date.Mon));
 
 
 		// ------------------------------------
@@ -114,10 +161,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		// ------------------------------------
 		ClearDrawScreen(); // 画面を焼き払う
 
+		DrawGraph(0, 0, GHandle[nowGlaph], FALSE); // 画像の表示
+
 		// ------------------------------------
 		// 後処理
 		// ------------------------------------
-
 
 		// Qキーで終了
 		if (keyState[KEY_INPUT_Q] == 1 && oldKeyState[KEY_INPUT_Q] == 0)
@@ -137,6 +185,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		ScreenFlip(); // 過去を忘却
 
 		clsDx(); // 簡易文字を抹殺
+	}
+
+	for (integer = 0; integer < 5; integer++)
+	{
+		DeleteGraph(GHandle[integer]);
 	}
 
 	DxLib_End();	// DXライブラリ使用の終了処理

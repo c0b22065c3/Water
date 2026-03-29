@@ -1,19 +1,63 @@
 #include "DxLib.h"
 
+#include "stdio.h"
+#include "time.h"
+
 #define SCREEN_WIDTH	640
 #define SCREEN_HEIGHT	480
+
+// 時間
+int startTime;					// ゲーム開始時間
+int nowTime;					// 現在の時間
+int oldTime;					// ひとつ前の時間
 
 // キーボード情報
 char keyState[256];		// キーボード情報
 char oldKeyState[256];	// ひとつ前のキーボード情報
 
+// 水を飲んだカウント
 int waterCount = 0;
+
+// 変数を一時的に格納する為の変数
+int integer = 0;
+float floating = 0.0f;
+char msg[64] = "";
+
+// テキストファイルに書き込み
+void SaveText(char *data)
+{
+	FILE* fp;
+	
+	fopen_s(&fp, "SaveData.txt", "a");
+	fprintf(fp, data);
+	fclose(fp);
+}
+
+// 数字のゼロ埋め（2桁）
+char* ZeroFilling10(int number)
+{
+	char buried[3];
+
+	if (number < 10)
+	{
+		sprintf_s(buried, "0%d", number);
+	}
+	else
+	{
+		sprintf_s(buried, "%d", number);
+	}
+
+	return buried;
+}
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	ChangeWindowMode(TRUE);	// ウィンドウモードに変更
 	SetGraphMode(SCREEN_WIDTH, SCREEN_HEIGHT, 32);	// 解像度の設定
 	SetMainWindowText("Water");	// ウィンドウのタイトルを変更
+
+	// 現在時刻を格納するよう変数
+	DATEDATA Date;
 
 	if (DxLib_Init() == -1)	// DXライブラリ初期化処理
 	{
@@ -26,6 +70,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		oldKeyState[key] = 0;
 	}
 
+	// ゲーム開始時間を得る
+	startTime = GetNowCount();
+
 	// ゲームループ
 	while (ProcessMessage() == 0)
 	{
@@ -33,22 +80,34 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		// 前処理
 		// ------------------------------------
 
+		// 現在時刻を得る
+		GetDateTime(&Date);
+
+		// ゲーム開始からの経過時間を更新
+		nowTime = GetNowCount() - startTime;
+
 		// 現在のキーボード情報を更新
 		GetHitKeyStateAll(keyState);
 
-		// SPACEキーで飲んだ水のカウントをプラスする
+		// SPACEキーで水を飲んだ回数を加算してテキストに保存する
 		if (keyState[KEY_INPUT_SPACE] == 1 && oldKeyState[KEY_INPUT_SPACE] == 0)
 		{
 			waterCount++;
-		}
 
-		// DELETEキーで飲んだ水のカウントをマイナスする
-		if (keyState[KEY_INPUT_DELETE] == 1 && oldKeyState[KEY_INPUT_DELETE] == 0)
-		{
-			waterCount--;
+			sprintf_s(msg, "%d/%c%c/%c%c %c%c:%c%c:%c%c 水を飲んだ！ %d杯目\n",
+				Date.Year,
+				ZeroFilling10(Date.Mon)[0], ZeroFilling10(Date.Mon)[1],
+				ZeroFilling10(Date.Day)[0], ZeroFilling10(Date.Day)[1],
+				ZeroFilling10(Date.Hour)[0], ZeroFilling10(Date.Hour)[1],
+				ZeroFilling10(Date.Min)[0], ZeroFilling10(Date.Min)[1],
+				ZeroFilling10(Date.Sec)[0], ZeroFilling10(Date.Sec)[1],
+				waterCount);
+			SaveText(msg);
 		}
 
 		printfDx("WaterCount:%d\n", waterCount);
+		printfDx("WaterCount:%s\n", ZeroFilling10(Date.Mon));
+
 
 		// ------------------------------------
 		// 描画処理
@@ -61,13 +120,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 
 		// Qキーで終了
-		if (keyState[KEY_INPUT_Q] == 1 && oldKeyState[KEY_INPUT_Q] == 0) break;
+		if (keyState[KEY_INPUT_Q] == 1 && oldKeyState[KEY_INPUT_Q] == 0)
+		{
+			break;
+		}
 
 		// キーボード情報を保存
 		for (int key = 0; key < 256; key++)
 		{
 			oldKeyState[key] = keyState[key];
 		}
+
+		// 時間を保存
+		oldTime = nowTime;
 
 		ScreenFlip(); // 過去を忘却
 

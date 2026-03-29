@@ -56,13 +56,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	SetGraphMode(SCREEN_WIDTH, SCREEN_HEIGHT, 32);	// 解像度の設定
 	SetMainWindowText("Water");	// ウィンドウのタイトルを変更
 
-	// 現在時刻を格納するよう変数
+	// 現在時刻を格納する用の変数
 	DATEDATA Date;
 
 	if (DxLib_Init() == -1)	// DXライブラリ初期化処理
 	{
 		return -1;	// エラーが起きたら直ちに終了
 	}
+
+	// 画像ハンドラ
+	int GHandleMahiron = LoadGraph("Image/Mahiron.jpg");
+	int GHandleNayutan = LoadGraph("Image/Nayutan.jpg");
+	int GHandleMomiji = LoadGraph("Image/Momiji.jpg");
+	int GHandleAsahi = LoadGraph("Image/Asahi.jpg");
+	int GHandleMiyo = LoadGraph("Image/Miyo.jpg");
 
 	// ひとつ前のキーボード情報を初期化
 	for (int key = 0; key < 256; key++)
@@ -106,7 +113,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		}
 
 		printfDx("WaterCount:%d\n", waterCount);
-		printfDx("WaterCount:%s\n", ZeroFilling10(Date.Mon));
 
 
 		// ------------------------------------
@@ -114,10 +120,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		// ------------------------------------
 		ClearDrawScreen(); // 画面を焼き払う
 
+		DrawGraph(0, 0, GHandleMahiron, FALSE); // 画像の表示
+
 		// ------------------------------------
 		// 後処理
 		// ------------------------------------
-
 
 		// Qキーで終了
 		if (keyState[KEY_INPUT_Q] == 1 && oldKeyState[KEY_INPUT_Q] == 0)
@@ -138,6 +145,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		clsDx(); // 簡易文字を抹殺
 	}
+
+	DeleteGraph(GHandleMahiron);
+	DeleteGraph(GHandleNayutan);
+	DeleteGraph(GHandleMomiji);
+	DeleteGraph(GHandleAsahi);
+	DeleteGraph(GHandleMiyo);
 
 	DxLib_End();	// DXライブラリ使用の終了処理
 
